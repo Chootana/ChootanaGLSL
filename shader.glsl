@@ -68,24 +68,25 @@ vec3 getNormal(vec3 p)
 float getSoftShadow(vec3 ro, vec3 rd, float k)
 {
   float res = 1.0; // hard shadow 
-  float d0 = 1e10;
+  float ph = 1e10;
   
   for (float t=0.0; t<MAX_DIST;)
   {
-    float d = map(ro + t * rd).x;
-    if (d < EPS) return 0.0;
+    float h = map(ro + t * rd).x;
+    if (h < EPS) return 0.0;
     
-    float y = d * d / (2.0 * d0);
-    float d_ys = sqrt(d * d - y * y);
-    float sh = clamp(k * d_ys / max(0.001, t - y), 0.0, 1.0);
+    float y = h * h / (2.0 * ph);
+    float d = sqrt(h * h - y * y);
+    float sh = clamp(k * h / max(0.001, t - y), 0.0, 1.0);
     
     res = min(res, sh * sh * (3.0 - 2.0 * sh));
-    d0 = d;
-    t += d;
+    ph = h;
+    t += h;
   }
   
   return res;
 }
+
 
 vec3 getRay(vec2 uv, vec3 co, vec3 forward, float focus)
 {
@@ -129,7 +130,7 @@ void main(void)
 
   tmp = (tmp > MAX_DIST) ? -1.0 : tmp;
   
-  vec3 lightDir = normalize(vec3(1, 2, 1));
+  vec3 lightDir = normalize(vec3(1.0, 2, 1));
   vec3 difColor = vec3(7.0, 5.8, 3.6);
   vec3 skyColor = vec3(0.4, 0.6, 0.8);
   vec3 bounceColor = vec3(0.6, 0.3, 0.1);
@@ -150,7 +151,7 @@ void main(void)
     vec3 n = getNormal(p);
     
     // shadow 
-    float shdw = getSoftShadow(p + n * 2 * EPS, lightDir, 16.0);
+    float shdw = getSoftShadow(p + n * 5 * EPS, lightDir, 16.0);
  
     
     // diffuse 
@@ -166,7 +167,7 @@ void main(void)
     
     // specular light 
     vec3 h = normalize(lightDir - ray);
-    float spec = pow(max(0.0, dot(h, n)), 128.0);
+    float spec = pow(max(0.0, dot(h, n)), 2.0);
     
     col = mat * light_in;
     col += mat * spec * shdw;
